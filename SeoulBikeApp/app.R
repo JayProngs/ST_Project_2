@@ -19,7 +19,8 @@ df <- df[-1, ]  # Remove the first row if it's redundant
 colnames(df) <- c("Date", "Rented_Bike_Count", "Hour", "Temperature", "Humidity", 
                   "Wind_speed", "Visibility", "Dew_point_temperature", "Solar_Radiation",
                   "Rainfall", "Snowfall", "Seasons", "Holiday", "Functioning_Day")
-
+df <- df %>%
+  mutate(across(c(Seasons, Holiday, Functioning_Day), as.factor))
 # Convert relevant columns to numeric
 df <- df %>%
   mutate(across(c(Rented_Bike_Count, Hour, Temperature, Humidity, Wind_speed,
@@ -34,40 +35,47 @@ ui <- fluidPage(
 
     # Sidebar
     sidebarLayout(
-        sidebarPanel(
-          
-          # First categorical variable for subsetting
-          selectInput("cat_var1", "Select Categorical Variable 1:",
-                      choices = c("Seasons", "Holiday", "Functioning_Day"),
-                      selected = "Seasons"),
-          uiOutput("cat_var1_levels"),
-          
-          # Second categorical variable for subsetting
-          selectInput("cat_var2", "Select Categorical Variable 2:",
-                      choices = c("Seasons", "Holiday", "Functioning_Day"),
-                      selected = "Holiday"),
-          uiOutput("cat_var2_levels"),
-          
-          # First numeric variable for subsetting
-          selectInput("num_var1", "Select Numeric Variable 1:",
-                      choices = c("Temperature", "Humidity", "Wind_speed",
-                                  "Visibility", "Solar_Radiation", "Rainfall", "Snowfall"),
-                      selected = "Temperature"),
-          uiOutput("num_var1_slider"),
-          
-          # Second numeric variable for subsetting
-          selectInput("num_var2", "Select Numeric Variable 2:",
-                      choices = c("Temperature", "Humidity", "Wind_speed",
-                                  "Visibility", "Solar_Radiation", "Rainfall", "Snowfall"),
-                      selected = "Humidity"),
-          uiOutput("num_var2_slider"),
-          
-          # Action button to subset data
-          actionButton("update_button", "Update Data"),
-          
-          helpText("Select variables and click 'Update Data' to apply subsetting.")
-          
-        ),
+      sidebarPanel(
+        # Widget to select first categorical variable for subsetting
+        selectInput("cat_var1", "Select Categorical Variable 1:",
+                    choices = c("Seasons", "Holiday", "Functioning_Day"),
+                    selected = "Seasons"),
+        
+        selectInput("cat_var1_level", "Select Levels of Seasons",
+                    choices = levels(df$Seasons),
+                    selected = levels(df$Seasons),
+                    multiple = FALSE),
+        
+        # Widget to select second categorical variable for subsetting
+        selectInput("cat_var2", "Select Categorical Variable 2:",
+                    choices = c("Seasons", "Holiday", "Functioning_Day"),
+                    selected = "Holiday"),
+        
+        selectInput("cat_var2_level", "Select Levels of Holiday",
+                    choices = levels(df$Holiday),
+                    selected = levels(df$Holiday),
+                    multiple = FALSE),
+        
+        # Widget to select first numeric variable for subsetting
+        selectInput("num_var1", "Select Numeric Variable 1:",
+                    choices = c("Temperature", "Humidity", "Wind_speed",
+                                "Visibility", "Solar_Radiation", "Rainfall", "Snowfall"),
+                    selected = "Temperature"),
+        uiOutput("num_var1_slider"),
+        
+        # Widget to select second numeric variable for subsetting
+        selectInput("num_var2", "Select Numeric Variable 2:",
+                    choices = c("Temperature", "Humidity", "Wind_speed",
+                                "Visibility", "Solar_Radiation", "Rainfall", "Snowfall"),
+                    selected = "Humidity"),
+        uiOutput("num_var2_slider"),
+        
+        # Action button to subset data
+        actionButton("update_button", "Update Data"),
+        
+        # Instructions
+        helpText("Select variables and click 'Update Data' to apply subsetting.")
+      ),
 
 
         mainPanel(
@@ -145,6 +153,8 @@ server <- function(input, output, session) {
   
   # Subset the data
   observeEvent(input$update_button, {
+    print(paste("Selected Levels for", input$cat_var1, ":", paste(input$cat_var1_level, collapse = ", ")))
+    print(paste("Selected Levels for", input$cat_var2, ":", paste(input$cat_var2_level, collapse = ", ")))
     subset_data <- df %>%
       filter(
         .data[[input$cat_var1]] %in% input$cat_var1_level,
@@ -161,6 +171,16 @@ server <- function(input, output, session) {
   output$data_table <- DT::renderDataTable({
     DT::datatable(values$data)
   })
+  
+  # downloading the data
+  output$download_data <- downloadHandler(
+    filename = function() {
+      paste("seoul_bike_data_subset", Sys.Date(), ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(values$data, file, row.names = FALSE)
+    }
+  )
   
 }
 
