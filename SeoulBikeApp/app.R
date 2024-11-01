@@ -8,21 +8,31 @@
 #
 
 library(shiny)
+library(dplyr)
+library(ggplot2)
+library(DT)
+library(readr)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
     # Application title
-    titlePanel("Old Faithful Geyser Data"),
+    titlePanel("Seoul Bike Sharing Data Explorer"),
 
     # Sidebar with a slider input for number of bins 
     sidebarLayout(
         sidebarPanel(
-            sliderInput("bins",
-                        "Number of bins:",
-                        min = 1,
-                        max = 50,
-                        value = 30)
+          # Dropdowns for categorical variables
+          # Dropdowns for categorical variables
+          selectInput("season", "Select Season:", choices = unique(df$Seasons), multiple = TRUE, selected = unique(df$Seasons)),
+          selectInput("holiday", "Select Holiday:", choices = unique(df$Holiday), multiple = TRUE, selected = unique(df$Holiday)),
+          
+          # Dynamic sliders for numeric filtering
+          uiOutput("temp_range"),
+          uiOutput("humidity_range"),
+          
+          # Action button to apply filter
+          actionButton("filter_data", "Apply Filter")
         ),
 
         # Show a plot of the generated distribution
