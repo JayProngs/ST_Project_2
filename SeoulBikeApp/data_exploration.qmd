@@ -1,0 +1,133 @@
+---
+title: "data_exploration"
+author: "Jay Thakur"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+## Import Data
+
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+df <- read.csv("SeoulBikeApp/SeoulBikeData.csv", sep=",", header=FALSE)
+df <- df[-1, ]
+colnames(df) <- c("Date", "Rented_Bike_Count", "Hour", "Temperature", "Humidity", 
+                  "Wind_speed", "Visibility", "Dew_point_temperature", "Solar_Radiation",
+                  "Rainfall", "Snowfall", "Seasons", "Holiday", "Functioning_Day")
+
+df <- df %>%
+  mutate(across(c(Rented_Bike_Count, Hour, Temperature, Humidity, Wind_speed,Visibility, Dew_point_temperature, Solar_Radiation, Rainfall, Snowfall, ), as.numeric))
+
+```
+
+## One-way Contingency Tables
+
+```{r}
+table(df$Seasons) # One-way
+```
+
+## Two-way Contingency Tables
+
+```{r}
+table(df$Seasons, df$Holiday) # Two-way
+```
+
+## Numerical Summaries
+
+```{r}
+# Summarize and print the result
+summary_stats <- df |>
+  group_by(Seasons) |>
+  summarize(
+    mean_rentals = mean(Rented_Bike_Count, na.rm = TRUE), 
+    sd_rentals = sd(Rented_Bike_Count, na.rm = TRUE)
+  )
+
+# Print the result
+print(summary_stats)
+
+
+summary_stats <- df |>
+  group_by(Holiday) |>
+  summarize(
+    mean_rentals = mean(Rented_Bike_Count, na.rm = TRUE), 
+    sd_rentals = sd(Rented_Bike_Count, na.rm = TRUE)
+  )
+print(summary_stats)
+```
+
+## Plot 1: Scatter plot with smoothing
+
+```{r}
+ggplot(df, aes(x = Temperature, y = Rented_Bike_Count, color = Seasons)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Scatter Plot of Temperature vs. Bike Rentals",
+       x = "Temperature (°C)", y = "Rented Bike Count") +
+  theme_minimal()
+```
+
+## Plot 2: Box Plot with Grouping
+
+```{r}
+ggplot(df, aes(x = Seasons, y = Temperature, fill = Seasons)) +
+  geom_boxplot(outlier.color = "red") +
+  facet_wrap(~ Functioning_Day) +
+  labs(title = "Box Plot of Temperature by Season and Functioning Day",
+       x = "Season", y = "Functioning_Day") +
+  theme_minimal()
+```
+
+## Plot 3: Histogram with fill color by category and faceting by weather
+
+```{r}
+ggplot(df, aes(x = Rented_Bike_Count, fill = Seasons)) +
+  geom_histogram(bins = 30, color = "black", alpha = 0.7) +
+  labs(title = "Histogram of Bike Rentals by Season with Functioning Day Faceting",
+       x = "Rented Bike Count", y = "Frequency") +
+  facet_wrap(~ Functioning_Day) +
+  scale_fill_brewer(palette = "Set2") + # Change color palette if desired
+  theme_minimal()
+```
+
+## Plot 4: Density plot with color by category (Seasons)
+
+```{r}
+ggplot(df, aes(x = Rented_Bike_Count, color = Seasons, fill = Seasons)) +
+  geom_density(alpha = 0.4) +
+  labs(title = "Density Plot of Bike Rentals by Season",
+       x = "Rented Bike Count", y = "Density") +
+  scale_color_brewer(palette = "Set2") +
+  scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+```
+
+## Plot 5: Heatmap of Rentals by Hour and Season
+
+```{r}
+df_hourly <- df %>%
+  group_by(Hour, Seasons) %>%
+  summarize(avg_rentals = mean(Rented_Bike_Count, na.rm = TRUE))
+
+ggplot(df_hourly, aes(x = Hour, y = Seasons, fill = avg_rentals)) +
+  geom_tile() +
+  labs(title = "Heatmap of Average Bike Rentals by Hour and Season",
+       x = "Hour", y = "Season", fill = "Avg Rentals") +
+  scale_fill_gradient(low = "white", high = "darkblue") +
+  theme_minimal()
+
+```
+
+## Plot 6: Time Series Plot
+
+```{r}
+df$Date <- as.Date(df$Date, format = "%d/%m/%Y")
+ggplot(df, aes(x = Date, y = Rented_Bike_Count, color = Seasons)) +
+  geom_line() +
+  labs(title = "Time Series of Bike Rentals", x = "Date", y = "Rented Bike Count") +
+  theme_minimal()
+```
