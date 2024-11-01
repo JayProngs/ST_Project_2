@@ -79,13 +79,21 @@ ui <- fluidPage(
                      p("Use the sidebar to subset the data and explore various summaries and plots."),
                      p("Data Source: ",
                        a("Kaggle Dataset", href = "https://www.kaggle.com/datasets/saurabhshahane/seoul-bike-sharing-demand-prediction", target = "_blank")),
-                     img(src = "seoul_bike.jpg", height = "300px"),
+                     img(src = "https://storage.googleapis.com/kaggle-datasets-images/1182486/1978532/347f28c40107cd8c896fb8e1230fcc87/dataset-cover.jpg?t=2021-02-26-16-11-12", height = "200px", width="400px"),
                      p("The app contains the following tabs:"),
                      tags$ul(
                        tags$li(strong("About:"), " Information about the app and data."),
                        tags$li(strong("Data Download:"), " View and download the dataset."),
                        tags$li(strong("Data Exploration:"), " Generate summaries and plots.")
                      )
+            ),
+            tabPanel("Data Download",
+                     DT::dataTableOutput("data_table"),
+                     downloadButton("download_data", "Download Data")
+            ),
+            tabPanel("Data Exploration",
+                     # Sub-tabs or content for data exploration
+                     uiOutput("exploration_ui")
             )
           )
         )
