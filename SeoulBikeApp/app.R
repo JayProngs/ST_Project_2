@@ -15,7 +15,7 @@ library(readr)
 
 # Read in the data
 df <- read.csv("SeoulBikeData.csv", header = FALSE)
-df <- df[-1, ]  # Remove the first row if it's redundant
+df <- df[-1, ]  # Remove the first row
 colnames(df) <- c("Date", "Rented_Bike_Count", "Hour", "Temperature", "Humidity", 
                   "Wind_speed", "Visibility", "Dew_point_temperature", "Solar_Radiation",
                   "Rainfall", "Snowfall", "Seasons", "Holiday", "Functioning_Day")
@@ -73,16 +73,16 @@ ui <- fluidPage(
           tabsetPanel(
             tabPanel("About", 
                      h3("About This App"),
-                     p("This app allows users to explore the Seoul Bike Sharing Demand dataset."),
-                     p("Use the sidebar to subset the data and explore various summaries and plots."),
+                     p("This app allows users to explore the Seoul Bike Sharing Demand dataset. This dataset is referred from Kaggle."),
+                     p("Use the sidebar to subset the data and explore various summaries and plots. Sidebar allows user to select upto Two categorical variables and 2 Numeric Variables."),
                      p("Data Source: ",
                        a("Kaggle Dataset", href = "https://www.kaggle.com/datasets/saurabhshahane/seoul-bike-sharing-demand-prediction", target = "_blank")),
-                     img(src = "https://storage.googleapis.com/kaggle-datasets-images/1182486/1978532/347f28c40107cd8c896fb8e1230fcc87/dataset-cover.jpg?t=2021-02-26-16-11-12", height = "200px", width="400px"),
+                     img(src = "https://storage.googleapis.com/kaggle-datasets-images/1182486/1978532/347f28c40107cd8c896fb8e1230fcc87/dataset-cover.jpg?t=2021-02-26-16-11-12", height = "300px", width="500px"),
                      p("The app contains the following tabs:"),
                      tags$ul(
-                       tags$li(strong("About:"), " Information about the app and data."),
-                       tags$li(strong("Data Download:"), " View and download the dataset."),
-                       tags$li(strong("Data Exploration:"), " Generate summaries and plots.")
+                       tags$li(strong("About:"), " Information about how to use the app, data and where data is taken from."),
+                       tags$li(strong("Data Download:"), " This tab shows user the data which is filtered using Sidebar and allows user to download that data in CSV format."),
+                       tags$li(strong("Data Exploration:"), " This tab allows user to generate Categorical summary (count), Numeric Variable summary (Mean, Median, 1st and 3rd Quartile, Minimum and Maximum) with or without grouping over Categorical variable. It also allows user to generate various plots using different variables.")
                      )
             ),
             tabPanel("Data Download",
@@ -264,7 +264,6 @@ server <- function(input, output, session) {
   })
   
 }
-
 
 
 # Run the application 
