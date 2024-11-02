@@ -38,5 +38,5 @@ To run the app locally:
 3. Open the app.R file in RStudio.
 4. Run the application by clicking Run App.
 
-License:
+## License:
 This project is licensed under the MIT License. Please refer to the LICENSE file for details.
