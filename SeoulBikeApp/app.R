@@ -153,8 +153,8 @@ server <- function(input, output, session) {
   
   # Subset the data
   observeEvent(input$update_button, {
-    print(paste("Selected Levels for", input$cat_var1, ":", paste(input$cat_var1_level, collapse = ", ")))
-    print(paste("Selected Levels for", input$cat_var2, ":", paste(input$cat_var2_level, collapse = ", ")))
+    # print(paste("Selected Levels for", input$cat_var1, ":", paste(input$cat_var1_level, collapse = ", ")))
+    # print(paste("Selected Levels for", input$cat_var2, ":", paste(input$cat_var2_level, collapse = ", ")))
     subset_data <- df %>%
       filter(
         .data[[input$cat_var1]] %in% input$cat_var1_level,
@@ -181,6 +181,92 @@ server <- function(input, output, session) {
       write.csv(values$data, file, row.names = FALSE)
     }
   )
+  
+  output$exploration_ui <- renderUI({
+    tagList(
+      # Set default selected value
+      selectInput("summary_type", "Choose Summary Type:",
+                  choices = c("Categorical Summaries", "Numeric Summaries", "Plots"),
+                  selected = "Categorical Summaries"),
+      uiOutput("summary_ui")
+    )
+  })
+  
+  output$summary_ui <- renderUI({
+    req(input$summary_type)
+    if (input$summary_type == "Categorical Summaries") {
+      tagList(
+        selectInput("cat_var_summary", "Select Categorical Variable:",
+                    choices = names(df)[sapply(df, is.factor)]),
+        verbatimTextOutput("cat_summary")
+      )
+    } else if (input$summary_type == "Numeric Summaries") {
+      tagList(
+        selectInput("num_var_summary", "Select Numeric Variable:",
+                    choices = names(df)[sapply(df, is.numeric)]),
+        selectInput("group_var", "Group By (Categorical Variable):",
+                    choices = c("None", names(df)[sapply(df, is.factor)])),
+        verbatimTextOutput("num_summary")
+      )
+    } else if (input$summary_type == "Plots") {
+      tagList(
+        selectInput("plot_type", "Select Plot Type:",
+                    choices = c("Scatter Plot", "Box Plot", "Heatmap", "Custom Plot")),
+        uiOutput("plot_ui"),
+        plotOutput("plot_output")
+      )
+    }
+  })
+  
+  observe({
+    req(input$summary_type)
+    if (input$summary_type == "Categorical Summaries") {
+      output$cat_summary <- renderPrint({
+        req(input$cat_var_summary)
+        cat_table <- table(values$data[[input$cat_var_summary]])
+        print(cat_table)
+      })
+    } else if (input$summary_type == "Numeric Summaries") {
+      output$num_summary <- renderPrint({
+        req(input$num_var_summary)
+        if (input$group_var == "None") {
+          summary(values$data[[input$num_var_summary]])
+        } else {
+          aggregate(values$data[[input$num_var_summary]], 
+                    by = list(values$data[[input$group_var]]), summary)
+        }
+      })
+    } else if (input$summary_type == "Plots") {
+      output$plot_ui <- renderUI({
+        tagList(
+          selectInput("x_var", "X-axis Variable:", choices = names(values$data)),
+          selectInput("y_var", "Y-axis Variable:", choices = names(values$data)),
+          selectInput("color_var", "Color By:", choices = c("None", names(values$data)))
+        )
+      })
+      
+      output$plot_output <- renderPlot({
+        req(input$plot_type, input$x_var, input$y_var)
+        p <- ggplot(values$data, aes_string(x = input$x_var, y = input$y_var))
+        if (input$color_var != "None") {
+          p <- p + aes_string(color = input$color_var)
+        }
+        if (input$plot_type == "Scatter Plot") {
+          p <- p + geom_point()
+        } else if (input$plot_type == "Box Plot") {
+          p <- p + geom_boxplot()
+        } else if (input$plot_type == "Heatmap") {
+          p <- ggplot(values$data, aes_string(x = input$x_var, y = input$y_var, fill = input$color_var)) +
+            geom_tile()
+        }
+        p
+      })
+    }
+  })
+  
+  output$summaryText <- renderText({
+    paste("Data last updated on:", Sys.Date())
+  })
   
 }
 
