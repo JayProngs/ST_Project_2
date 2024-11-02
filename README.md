@@ -4,7 +4,7 @@ Welcome to the Seoul Bike Sharing Data Explorer! This Shiny web application lets
 
 ## Project Overview
 This app provides an interactive and user-friendly way to explore patterns in bike-sharing demand across Seoul. This app is built with R and Shiny framework. It offer option to filter, download and visualize the dataset.
-The application can be accessed [here](https://jsthakur.shinyapps.io/project-2/](https://jsthakur.shinyapps.io/Seoul-Bike-Sharing-Data-Explorer/)
+The application can be accessed [here](https://jsthakur.shinyapps.io/Seoul-Bike-Sharing-Data-Explorer/)
 
 ## Features
 
