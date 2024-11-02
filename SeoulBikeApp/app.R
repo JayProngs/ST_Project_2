@@ -36,25 +36,16 @@ ui <- fluidPage(
     # Sidebar
     sidebarLayout(
       sidebarPanel(
-        # Widget to select first categorical variable for subsetting
         selectInput("cat_var1", "Select Categorical Variable 1:",
                     choices = c("Seasons", "Holiday", "Functioning_Day"),
                     selected = "Seasons"),
-        
-        selectInput("cat_var1_level", "Select Levels of Seasons",
-                    choices = levels(df$Seasons),
-                    selected = levels(df$Seasons),
-                    multiple = FALSE),
+        uiOutput("cat_var1_levels"),
         
         # Widget to select second categorical variable for subsetting
         selectInput("cat_var2", "Select Categorical Variable 2:",
                     choices = c("Seasons", "Holiday", "Functioning_Day"),
                     selected = "Holiday"),
-        
-        selectInput("cat_var2_level", "Select Levels of Holiday",
-                    choices = levels(df$Holiday),
-                    selected = levels(df$Holiday),
-                    multiple = FALSE),
+        uiOutput("cat_var2_levels"),
         
         # Widget to select first numeric variable for subsetting
         selectInput("num_var1", "Select Numeric Variable 1:",
@@ -113,22 +104,20 @@ server <- function(input, output, session) {
   # Reactive values to store the subsetted data
   values <- reactiveValues(data = df)
   
-  # First categorical variable
+  # Update levels for the first categorical variable
   output$cat_var1_levels <- renderUI({
     req(input$cat_var1)
     selectInput("cat_var1_level", paste("Select Levels of", input$cat_var1),
-                choices = levels(as.factor(df[[input$cat_var1]])),
-                selected = levels(as.factor(df[[input$cat_var1]])),
-                multiple = TRUE)
+                choices = c("All of the above", levels(as.factor(df[[input$cat_var1]]))),
+                selected = "All of the above", multiple = FALSE)
   })
   
-  # Second categorical variable
+  # Update levels for the second categorical variable
   output$cat_var2_levels <- renderUI({
     req(input$cat_var2)
     selectInput("cat_var2_level", paste("Select Levels of", input$cat_var2),
-                choices = levels(as.factor(df[[input$cat_var2]])),
-                selected = levels(as.factor(df[[input$cat_var2]])),
-                multiple = TRUE)
+                choices = c("All of the above", levels(as.factor(df[[input$cat_var2]]))),
+                selected = "All of the above", multiple = FALSE)
   })
   
   # First numeric variable
@@ -153,19 +142,25 @@ server <- function(input, output, session) {
   
   # Subset the data
   observeEvent(input$update_button, {
-    # print(paste("Selected Levels for", input$cat_var1, ":", paste(input$cat_var1_level, collapse = ", ")))
-    # print(paste("Selected Levels for", input$cat_var2, ":", paste(input$cat_var2_level, collapse = ", ")))
+    # Print the selected options for debugging
+    print(paste("Selected Levels for", input$cat_var1, ":", paste(input$cat_var1_level, collapse = ", ")))
+    print(paste("Selected Levels for", input$cat_var2, ":", paste(input$cat_var2_level, collapse = ", ")))
+    
+    # Filter data based on user inputs
     subset_data <- df %>%
       filter(
-        .data[[input$cat_var1]] %in% input$cat_var1_level,
-        .data[[input$cat_var2]] %in% input$cat_var2_level,
+        (input$cat_var1_level == "All of the above" | .data[[input$cat_var1]] %in% input$cat_var1_level),
+        (input$cat_var2_level == "All of the above" | .data[[input$cat_var2]] %in% input$cat_var2_level),
         .data[[input$num_var1]] >= input$num_var1_range[1],
         .data[[input$num_var1]] <= input$num_var1_range[2],
         .data[[input$num_var2]] >= input$num_var2_range[1],
         .data[[input$num_var2]] <= input$num_var2_range[2]
       )
+    
+    # Update the reactive values with the filtered data
     values$data <- subset_data
   })
+  
   
   # show the data in the Data Download tab
   output$data_table <- DT::renderDataTable({
