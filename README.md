@@ -4,7 +4,7 @@ Welcome to the Seoul Bike Sharing Data Explorer! This Shiny web application lets
 
 ## Project Overview
 This app provides an interactive and user-friendly way to explore patterns in bike-sharing demand across Seoul. This app is built with R and Shiny framework. It offer option to filter, download and visualize the dataset.
-The application can be accessed through this link : https://jsthakur.shinyapps.io/project-2/
+The application can be accessed [here](https://jsthakur.shinyapps.io/project-2/)
 
 ## Features
 
@@ -34,7 +34,7 @@ Numeric Summaries: Calculates summary statistics (mean, median, quartiles, etc.)
 Plots: Generates various plots like scatter plots, histograms, density plots, and heatmaps. You can select variables for the x-axis, y-axis, and color to observe relationships and trends within the data.
 
 ## Dataset:
-The dataset referred can be found at : https://www.kaggle.com/datasets/saurabhshahane/seoul-bike-sharing-demand-prediction
+The dataset referred can be found [here](https://www.kaggle.com/datasets/saurabhshahane/seoul-bike-sharing-demand-prediction)
 
 ## User Guide
 
