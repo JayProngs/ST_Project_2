@@ -19,13 +19,16 @@ df <- df[-1, ]  # Remove the first row
 colnames(df) <- c("Date", "Rented_Bike_Count", "Hour", "Temperature", "Humidity", 
                   "Wind_speed", "Visibility", "Dew_point_temperature", "Solar_Radiation",
                   "Rainfall", "Snowfall", "Seasons", "Holiday", "Functioning_Day")
-df <- df %>%
+df <- df |>
   mutate(across(c(Seasons, Holiday, Functioning_Day), as.factor))
 # Convert relevant columns to numeric
-df <- df %>%
+df <- df |>
   mutate(across(c(Rented_Bike_Count, Hour, Temperature, Humidity, Wind_speed,
                   Visibility, Dew_point_temperature, Solar_Radiation, 
                   Rainfall, Snowfall), as.numeric))
+df <- df |>
+  mutate(Date = as.Date(Date, format = "%d/%m/%Y"))
+
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -49,14 +52,14 @@ ui <- fluidPage(
         
         # Widget to select first numeric variable for subsetting
         selectInput("num_var1", "Select Numeric Variable 1:",
-                    choices = c("Temperature", "Humidity", "Wind_speed",
+                    choices = c("Date", "Temperature", "Humidity", "Wind_speed",
                                 "Visibility", "Solar_Radiation", "Rainfall", "Snowfall"),
-                    selected = "Temperature"),
+                    selected = "Date"),
         uiOutput("num_var1_slider"),
         
         # Widget to select second numeric variable for subsetting
         selectInput("num_var2", "Select Numeric Variable 2:",
-                    choices = c("Temperature", "Humidity", "Wind_speed",
+                    choices = c("Date","Temperature", "Humidity", "Wind_speed",
                                 "Visibility", "Solar_Radiation", "Rainfall", "Snowfall"),
                     selected = "Humidity"),
         uiOutput("num_var2_slider"),
@@ -123,21 +126,41 @@ server <- function(input, output, session) {
   # First numeric variable
   output$num_var1_slider <- renderUI({
     req(input$num_var1)
-    numeric_var <- df[[input$num_var1]]
-    sliderInput("num_var1_range", paste("Select Range of", input$num_var1),
-                min = min(numeric_var, na.rm = TRUE),
-                max = max(numeric_var, na.rm = TRUE),
-                value = c(min(numeric_var, na.rm = TRUE), max(numeric_var, na.rm = TRUE)))
+    if (input$num_var1 == "Date") {
+      # Render date slider
+      sliderInput("num_var1_range", "Select Date Range:",
+                  min = min(df$Date, na.rm = TRUE),
+                  max = max(df$Date, na.rm = TRUE),
+                  value = c(min(df$Date, na.rm = TRUE), max(df$Date, na.rm = TRUE)),
+                  timeFormat = "%Y-%m-%d")
+    } else {
+      # Render numeric slider
+      numeric_var <- df[[input$num_var1]]
+      sliderInput("num_var1_range", paste("Select Range of", input$num_var1),
+                  min = min(numeric_var, na.rm = TRUE),
+                  max = max(numeric_var, na.rm = TRUE),
+                  value = c(min(numeric_var, na.rm = TRUE), max(numeric_var, na.rm = TRUE)))
+    }
   })
   
   # Second numeric variable
   output$num_var2_slider <- renderUI({
     req(input$num_var2)
-    numeric_var <- df[[input$num_var2]]
-    sliderInput("num_var2_range", paste("Select Range of", input$num_var2),
-                min = min(numeric_var, na.rm = TRUE),
-                max = max(numeric_var, na.rm = TRUE),
-                value = c(min(numeric_var, na.rm = TRUE), max(numeric_var, na.rm = TRUE)))
+    if (input$num_var2 == "Date") {
+      # Render date slider
+      sliderInput("num_var2_range", "Select Date Range:",
+                  min = min(df$Date, na.rm = TRUE),
+                  max = max(df$Date, na.rm = TRUE),
+                  value = c(min(df$Date, na.rm = TRUE), max(df$Date, na.rm = TRUE)),
+                  timeFormat = "%Y-%m-%d")
+    } else {
+      # Render numeric slider
+      numeric_var <- df[[input$num_var2]]
+      sliderInput("num_var2_range", paste("Select Range of", input$num_var2),
+                  min = min(numeric_var, na.rm = TRUE),
+                  max = max(numeric_var, na.rm = TRUE),
+                  value = c(min(numeric_var, na.rm = TRUE), max(numeric_var, na.rm = TRUE)))
+    }
   })
   
   # Subset the data
@@ -147,14 +170,20 @@ server <- function(input, output, session) {
     print(paste("Selected Levels for", input$cat_var2, ":", paste(input$cat_var2_level, collapse = ", ")))
     
     # Filter data based on user inputs
-    subset_data <- df %>%
+    subset_data <- df |>
       filter(
         (input$cat_var1_level == "All of the above" | .data[[input$cat_var1]] %in% input$cat_var1_level),
         (input$cat_var2_level == "All of the above" | .data[[input$cat_var2]] %in% input$cat_var2_level),
-        .data[[input$num_var1]] >= input$num_var1_range[1],
-        .data[[input$num_var1]] <= input$num_var1_range[2],
-        .data[[input$num_var2]] >= input$num_var2_range[1],
-        .data[[input$num_var2]] <= input$num_var2_range[2]
+        if (input$num_var1 == "Date") {
+          Date >= input$num_var1_range[1] & Date <= input$num_var1_range[2]
+        } else {
+          .data[[input$num_var1]] >= input$num_var1_range[1] & .data[[input$num_var1]] <= input$num_var1_range[2]
+        },
+        if (input$num_var2 == "Date") {
+          Date >= input$num_var2_range[1] & Date <= input$num_var2_range[2]
+        } else {
+          .data[[input$num_var2]] >= input$num_var2_range[1] & .data[[input$num_var2]] <= input$num_var2_range[2]
+        }
       )
     
     # Update the reactive values with the filtered data
