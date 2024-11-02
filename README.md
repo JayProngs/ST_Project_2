@@ -12,22 +12,39 @@ The application has into three main tabs:
 
 #### 1. About Tab
 Purpose: Introduces the app and summarizes its features.
+
 Data Source: Provides a brief description and a link to the Kaggle dataset used.
+
 Instructions: Guides you on how to use the sidebar for data subsetting and explains each tab's functionality.
+
 Visuals: Displays an image relevant to the dataset for added context.
 
 #### 2. Data Download Tab
 Data View: Shows the current subset of data in an interactive table.
+
 Data Export: Allows you to download the filtered data as a CSV file.
 
 #### 3. Data Exploration Tab
 Summaries & Visualization: Tools for analyzing and visualizing data.
+
 Categorical Summaries: Displays counts and summaries for selected categorical variables.
+
 Numeric Summaries: Calculates summary statistics (mean, median, quartiles, etc.) for numeric variables, optionally grouped by a selected categorical variable.
+
 Plots: Generates various plots like scatter plots, histograms, density plots, and heatmaps. You can select variables for the x-axis, y-axis, and color to observe relationships and trends within the data.
 
 ## Dataset:
 The dataset referred can be found at : https://www.kaggle.com/datasets/saurabhshahane/seoul-bike-sharing-demand-prediction
+
+## User Guide
+
+The sidebar on the left side of the app allows users to subset the data based on:
+
+1. Categorical Variables: Two categorical variables (e.g., Seasons, Holiday) can be selected for filtering.
+
+2. Numeric Variables: Two numeric variables (e.g., Temperature, Humidity) with adjustable sliders.
+
+After choosing the filering options, the Update Data button applies the filters and refreshes the main panel.
 
 ## Setup and Deployment
 
