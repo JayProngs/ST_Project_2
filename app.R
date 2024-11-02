@@ -340,6 +340,11 @@ server <- function(input, output, session) {
             p <- p + geom_boxplot()
             
           } else if (input$plot_type == "Histogram") {
+            if (input$color_var == "None") {
+              showNotification("Value of Color By: filter should not be None", type = "error")
+              return (NULL)
+            }
+            showNotification("Y-axis Variable have no impact on Histogram", type = "message")
             p <- ggplot(values$data, aes_string(x = input$x_var, fill = input$color_var)) +
               geom_histogram(bins = 30, color = "black", alpha = 0.7)
             
