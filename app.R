@@ -69,7 +69,7 @@ ui <- fluidPage(
         actionButton("update_button", "Update Data"),
         
         # Instructions
-        helpText("Select variables and click 'Update Data' to apply subsetting.")
+        helpText("Select variables and click 'Update Data' to apply subsetting. Use 'All of the above' to include all levels of a categorical variable.")
       ),
 
 
@@ -194,7 +194,14 @@ server <- function(input, output, session) {
       )
     
     # Update the reactive values with the filtered data
-    values$data <- subset_data
+    if (nrow(subset_data) == 0) {
+      showNotification("No data available after applying filters. Please adjust your selections.", type = "warning")
+      values$data <- NULL
+      return(NULL)
+    } else {
+      values$data <- subset_data
+    }
+    
   })
   
   
@@ -324,6 +331,9 @@ server <- function(input, output, session) {
           p <- ggplot(values$data, aes_string(x = input$x_var, y = input$y_var))
           
           if (input$plot_type == "Scatter Plot") {
+            if ( !(is.numeric(values$data[[input$x_var]])) | !(is.numeric(values$data[[input$x_var]])) ){
+              showNotification("X and Y axis Variable ideally should be Numeric", type = "warning")
+            }
             p <- p + geom_point()
             
           } else if (input$plot_type == "Box Plot") {
