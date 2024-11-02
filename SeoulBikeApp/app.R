@@ -220,8 +220,10 @@ server <- function(input, output, session) {
     req(input$summary_type)
     if (input$summary_type == "Categorical Summaries") {
       tagList(
-        selectInput("cat_var_summary", "Select Categorical Variable:",
-                    choices = names(df)[sapply(df, is.factor)]),
+        selectInput("cat_var_summary1", "Select First Categorical Variable:",
+                    choices = names(df)[sapply(df, is.factor)], selected = "Seasons"),
+        selectInput("cat_var_summary2", "Select Second Categorical Variable:",
+                    choices = c("None", names(df)[sapply(df, is.factor)]), selected = "None"),
         verbatimTextOutput("cat_summary")
       )
     } else if (input$summary_type == "Numeric Summaries") {
@@ -242,13 +244,45 @@ server <- function(input, output, session) {
     }
   })
   
+  
+  observe({
+    req(input$summary_type == "Categorical Summaries")
+    
+    output$cat_summary <- renderPrint({
+      req(input$cat_var_summary1)
+      
+      # Check if the user selected a second categorical variable
+      if (input$cat_var_summary2 != "None") {
+        req(input$cat_var_summary2)
+        # Generate a two-way contingency table
+        cat_table <- table(values$data[[input$cat_var_summary1]], values$data[[input$cat_var_summary2]])
+        print(cat_table)
+      } else {
+        # Generate a one-way table if only one variable is selected
+        cat_table <- table(values$data[[input$cat_var_summary1]])
+        print(cat_table)
+      }
+    })
+  })
+  
+  
   observe({
     req(input$summary_type)
     if (input$summary_type == "Categorical Summaries") {
       output$cat_summary <- renderPrint({
-        req(input$cat_var_summary)
-        cat_table <- table(values$data[[input$cat_var_summary]])
-        print(cat_table)
+        req(input$cat_var_summary1)
+        
+        # Check if the user selected a second categorical variable
+        if (input$cat_var_summary2 != "None") {
+          req(input$cat_var_summary2)
+          # Generate a two-way contingency table
+          cat_table <- table(values$data[[input$cat_var_summary1]], values$data[[input$cat_var_summary2]])
+          print(cat_table)
+        } else {
+          # Generate a one-way table if only one variable is selected
+          cat_table <- table(values$data[[input$cat_var_summary1]])
+          print(cat_table)
+        }
       })
     } else if (input$summary_type == "Numeric Summaries") {
       output$num_summary <- renderPrint({
