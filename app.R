@@ -21,6 +21,7 @@ colnames(df) <- c("Date", "Rented_Bike_Count", "Hour", "Temperature", "Humidity"
                   "Rainfall", "Snowfall", "Seasons", "Holiday", "Functioning_Day")
 df <- df |>
   mutate(across(c(Seasons, Holiday, Functioning_Day), as.factor))
+
 # Convert relevant columns to numeric
 df <- df |>
   mutate(across(c(Rented_Bike_Count, Hour, Temperature, Humidity, Wind_speed,
@@ -74,6 +75,7 @@ ui <- fluidPage(
 
         mainPanel(
           tabsetPanel(
+            # First tab for about
             tabPanel("About", 
                      h3("About This App"),
                      p("This app allows users to explore the Seoul Bike Sharing Demand dataset. This dataset is referred from Kaggle."),
@@ -88,12 +90,15 @@ ui <- fluidPage(
                        tags$li(strong("Data Exploration:"), " This tab allows user to generate Categorical summary (count), Numeric Variable summary (Mean, Median, 1st and 3rd Quartile, Minimum and Maximum) with or without grouping over Categorical variable. It also allows user to generate various plots using different variables.")
                      )
             ),
+            
+            # second tab for data download
             tabPanel("Data Download",
                      DT::dataTableOutput("data_table"),
                      downloadButton("download_data", "Download Data")
             ),
+            
+            # Third tab for plot and summaries
             tabPanel("Data Exploration",
-                     # Sub-tabs or content for data exploration
                      uiOutput("exploration_ui")
             )
           )
@@ -104,7 +109,7 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output, session) {
   
-  # Reactive values to store the subsetted data
+  # store the subsetted data
   values <- reactiveValues(data = df)
   
   # Update levels for the first categorical variable
@@ -126,6 +131,7 @@ server <- function(input, output, session) {
   # First numeric variable
   output$num_var1_slider <- renderUI({
     req(input$num_var1)
+    # changed for date variable
     if (input$num_var1 == "Date") {
       # Render date slider
       sliderInput("num_var1_range", "Select Date Range:",
@@ -146,6 +152,7 @@ server <- function(input, output, session) {
   # Second numeric variable
   output$num_var2_slider <- renderUI({
     req(input$num_var2)
+    # changed for date variable
     if (input$num_var2 == "Date") {
       # Render date slider
       sliderInput("num_var2_range", "Select Date Range:",
@@ -165,11 +172,11 @@ server <- function(input, output, session) {
   
   # Subset the data
   observeEvent(input$update_button, {
-    # Print the selected options for debugging
-    print(paste("Selected Levels for", input$cat_var1, ":", paste(input$cat_var1_level, collapse = ", ")))
-    print(paste("Selected Levels for", input$cat_var2, ":", paste(input$cat_var2_level, collapse = ", ")))
+    # print(paste("Selected Levels for", input$cat_var1, ":", paste(input$cat_var1_level, collapse = ", ")))
+    # print(paste("Selected Levels for", input$cat_var2, ":", paste(input$cat_var2_level, collapse = ", ")))
     
     # Filter data based on user inputs
+    # changed for date variable
     subset_data <- df |>
       filter(
         (input$cat_var1_level == "All of the above" | .data[[input$cat_var1]] %in% input$cat_var1_level),
@@ -218,6 +225,8 @@ server <- function(input, output, session) {
   
   output$summary_ui <- renderUI({
     req(input$summary_type)
+    # Summary for Cat variables
+    # added second cat variable and set as None for Default
     if (input$summary_type == "Categorical Summaries") {
       tagList(
         selectInput("cat_var_summary1", "Select First Categorical Variable:",
@@ -227,6 +236,7 @@ server <- function(input, output, session) {
         verbatimTextOutput("cat_summary")
       )
     } else if (input$summary_type == "Numeric Summaries") {
+      # Summary for Numerical variables
       tagList(
         selectInput("num_var_summary", "Select Numeric Variable:",
                     choices = names(df)[sapply(df, is.numeric)]),
@@ -235,9 +245,11 @@ server <- function(input, output, session) {
         verbatimTextOutput("num_summary")
       )
     } else if (input$summary_type == "Plots") {
+      # Selecting Plot type
       tagList(
         selectInput("plot_type", "Select Plot Type:",
-                    choices = c("Scatter Plot", "Box Plot", "Heatmap", "Custom Plot")),
+                    choices = c("Scatter Plot", "Box Plot", "Histogram", "Density Plot",
+                                 "Heatmap", "Time Series Plot")),
         uiOutput("plot_ui"),
         plotOutput("plot_output")
       )
@@ -285,6 +297,7 @@ server <- function(input, output, session) {
         }
       })
     } else if (input$summary_type == "Numeric Summaries") {
+      # show numeric variable Summary according to group variables selection
       output$num_summary <- renderPrint({
         req(input$num_var_summary)
         if (input$group_var == "None") {
@@ -295,6 +308,7 @@ server <- function(input, output, session) {
         }
       })
     } else if (input$summary_type == "Plots") {
+      # selection of Axis variable and Colour fill variable.
       output$plot_ui <- renderUI({
         tagList(
           selectInput("x_var", "X-axis Variable:", choices = names(values$data)),
@@ -304,21 +318,79 @@ server <- function(input, output, session) {
       })
       
       output$plot_output <- renderPlot({
-        req(input$plot_type, input$x_var, input$y_var)
-        p <- ggplot(values$data, aes_string(x = input$x_var, y = input$y_var))
-        if (input$color_var != "None") {
-          p <- p + aes_string(color = input$color_var)
-        }
-        if (input$plot_type == "Scatter Plot") {
-          p <- p + geom_point()
-        } else if (input$plot_type == "Box Plot") {
-          p <- p + geom_boxplot()
-        } else if (input$plot_type == "Heatmap") {
-          p <- ggplot(values$data, aes_string(x = input$x_var, y = input$y_var, fill = input$color_var)) +
-            geom_tile()
-        }
-        p
+        req(input$plot_type, input$x_var)
+        
+        tryCatch({
+          p <- ggplot(values$data, aes_string(x = input$x_var, y = input$y_var))
+          
+          if (input$plot_type == "Scatter Plot") {
+            p <- p + geom_point()
+            
+          } else if (input$plot_type == "Box Plot") {
+            p <- p + geom_boxplot()
+            
+          } else if (input$plot_type == "Histogram") {
+            p <- ggplot(values$data, aes_string(x = input$x_var, fill = input$color_var)) +
+              geom_histogram(bins = 30, color = "black", alpha = 0.7)
+            
+          } else if (input$plot_type == "Density Plot") {
+            # added else to get color fill
+            # added Message to show useless Y variable to user
+            if (input$color_var == "None") {
+              showNotification("Y-axis Variable have no impact on Denesity Plot", type = "message")
+              p <- ggplot(values$data, aes_string(x = input$x_var)) +
+                geom_density(fill = "lightblue", alpha = 0.7) +
+                labs(x = input$x_var, y = "Density")
+            } else {
+              # added Message to show useless Y variable to user
+              showNotification("Y-axis Variable have no impact on Denesity Plot", type = "message")
+              p <- ggplot(values$data, aes_string(x = input$x_var, fill = input$color_var)) +
+                geom_density(alpha = 0.7) +
+                labs(x = input$x_var, y = "Density")
+            }
+            
+          } else if (input$plot_type == "Heatmap") {
+            # added Error message to inform user for selection
+            if (input$color_var %in% c("None","Date")) {
+              showNotification("Select Color by: value other than Date or None", type = "error")
+              return(NULL)
+            }
+            # changed color scale for continous and discrete variables
+            if (is.numeric(values$data[[input$color_var]])) {
+              p <- ggplot(values$data, aes_string(x = input$x_var, y = input$y_var, fill = input$color_var)) +
+                geom_tile() +
+                scale_fill_viridis_c()
+            } else {
+              p <- ggplot(values$data, aes_string(x = input$x_var, y = input$y_var, fill = input$color_var)) +
+                geom_tile() +
+                scale_fill_viridis_d()
+            }
+            
+          } else if (input$plot_type == "Time Series Plot") {
+            # added Error Message to ask user to put correct input.
+            if (input$x_var != "Date") {
+              showNotification("Please select 'Date' for the X-axis in a Time Series Plot.", type = "error")
+              return(NULL)
+            }
+            
+            p <- ggplot(values$data, aes_string(x = "Date", y = input$y_var)) +
+              geom_line(color = "blue") +
+              labs(x = "Date", y = input$y_var, title = "Time Series Plot")
+          }
+          
+          if (input$color_var != "None" && input$plot_type != "Heatmap") {
+            p <- p + aes_string(color = input$color_var)
+          }
+          
+          p + theme_minimal()
+          
+        }, error = function(e) {
+          showNotification("Error while generating Graph Plot.", type = "error")
+          return(NULL)
+        })
       })
+      
+      
     }
   })
   
